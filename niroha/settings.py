@@ -16,6 +16,15 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+import firebase_admin
+from firebase_admin import credentials
+
+cred = credentials.Certificate("firebase.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://nirohaapi-default-rtdb.firebaseio.com/',
+    'storageBucket': 'nirohaapi.appspot.com'
+})
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -25,7 +34,7 @@ SECRET_KEY = 'django-insecure-q+q32**g-_tlv#dlax-ax2ur44iwo+wst8xto9q2r%##wh)6wo
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app']
+ALLOWED_HOSTS = ['.vercel.app','localhost','127.0.0.1']
 
 
 # Application definition
@@ -52,10 +61,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'niroha.urls'
 
+import os
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
