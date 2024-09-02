@@ -15,11 +15,26 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 import firebase_admin
 from firebase_admin import credentials
+from decouple import config
 
-cred = credentials.Certificate("firebase.json")
+firebase_credential = {
+  "type": config("FIREBASE_TYPE"),
+  "project_id": config("FIREBASE_PROJECT_ID"),
+  "private_key_id": config("FIREBASE_PRIVATE_KEY_ID"),
+  "private_key": config("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+  "client_email": config("FIREBASE_CLIENT_EMAIL"),
+  "client_id": config("FIREBASE_CLIENT_ID"),
+  "auth_uri": config("FIREBASE_AUTH_URI"),
+  "token_uri": config("FIREBASE_TOKEN_URI"),
+  "auth_provider_x509_cert_url": config("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+  "client_x509_cert_url": config("FIREBASE_CLIENT_X509_CERT_URL"),
+  "universe_domain": config("FIREBASE_UNIVERSE_DOMAIN")
+}
+
+
+cred = credentials.Certificate(firebase_credential)
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://nirohaapi-default-rtdb.firebaseio.com/',
     'storageBucket': 'nirohaapi.appspot.com'
