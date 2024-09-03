@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import render, redirect
 from firebase_admin import db, storage
 import os
@@ -63,11 +63,11 @@ def upload_files(request):
 def upload_success(request):
     return render(request, 'success.html')
 
-# New Endpoint: /limit
-def limit(request):
-    # Get the limit parameter from the query string
-    limit = int(request.GET.get('limit', 10))  # Default to 10 if not provided
-    
+# New Endpoint: /limit/<int:limit>
+def limit(request,limit):
+    if limit <= 0:
+        return HttpResponseBadRequest('Limit must be a positive integer.')
+
     # Fetch all plants
     ref = db.reference('plants')
     plants = ref.get()
@@ -77,13 +77,13 @@ def limit(request):
 
     return JsonResponse(limited_plants)
 
-# New Endpoint: /plantID/<str:plant_id>
-def plantID(request, plant_id):
+# New Endpoint: /<str:plant_id>
+def plant_details(request, plant_id):
     # Fetch specific plant details from Firebase Realtime Database
     ref = db.reference(f'plants/{plant_id}')
     plant_details = ref.get()
 
     if not plant_details:
-        return HttpResponseBadRequest(f'Plant ID {plant_id} not found.')
+        return HttpResponseNotFound(f'Plant ID {plant_id} not found.')
 
     return JsonResponse(plant_details)
