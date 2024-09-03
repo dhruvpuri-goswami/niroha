@@ -124,7 +124,10 @@ def search_plant_by_name(request, plant_name):
     ref = db.reference('plants')
     plants = ref.get()
 
-    search_query = plant_name.lower()
+    original_string = plant_name
+    cleaned_string = original_string.replace("%20", "")
+
+    search_query = cleaned_string.lower()
 
     for plant_id, plant_data in plants.items():
         scientific_name = plant_data.get('scientific_name', '').lower()
