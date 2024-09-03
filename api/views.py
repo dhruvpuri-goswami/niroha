@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from firebase_admin import db, storage
 import os
 from datetime import timedelta
-
+from urllib.parse import unquote
 
 def hello_world(request):
     return JsonResponse({'message': 'Hello'})
@@ -124,10 +124,9 @@ def search_plant_by_name(request, plant_name):
     ref = db.reference('plants')
     plants = ref.get()
 
-    original_string = plant_name
-    cleaned_string = original_string.replace("%20", "")
+    search_query = unquote(plant_name).lower()
 
-    search_query = cleaned_string.lower()
+    print(search_query)
 
     for plant_id, plant_data in plants.items():
         scientific_name = plant_data.get('scientific_name', '').lower()
