@@ -79,8 +79,10 @@ def limit(request, limit):
     ref = db.reference('plants')
     plants = ref.get()
 
+    filtered_plants = {plant_id: plant_data for plant_id, plant_data in plants.items() if len(plant_data) >= 14}
+
     # Limit the number of plants returned
-    limited_plants = dict(list(plants.items())[:limit])
+    limited_plants = dict(list(filtered_plants.items())[:limit])
 
     # Add the first number and its text to each plant's data
     for plant_id, plant_data in limited_plants.items():
