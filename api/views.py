@@ -77,14 +77,45 @@ def limit(request,limit):
 
     return JsonResponse(limited_plants)
 
+def create_simplified_description(plant):
+    name = plant.get('common_names', [''])[0]
+    scientific_name = plant.get('scientific_name', '')
+    family = plant.get('family', '')
+    native_region = plant.get('habitat_distribution', {}).get('native_region', '')
+    appearance = plant.get('description', {}).get('appearance', '')
+    size = plant.get('description', {}).get('size', '')
+    climate = plant.get('habitat_distribution', {}).get('preferred_climate', '').replace(".", "").lower()
+    soil = plant.get('habitat_distribution', {}).get('soil_requirements', '').replace(".", "").lower()
+    sunlight = plant.get('habitat_distribution', {}).get('sunlight_needs', '').replace(".", "").lower()
+    medicinal_properties = ', '.join(plant.get('medicinal_uses', {}).get('therapeutic_properties', []))
+    ayurveda_uses = plant.get('medicinal_uses', {}).get('applications_in_ayush', {}).get('ayurveda', '')
+    cultural_significance = plant.get('cultural_historical_significance', {}).get('historical_use', '')
+
+    description = (
+        f"{name} ({scientific_name}) is a plant native to {native_region} and belongs to the {family} family. "
+        f"It is recognized by its {appearance}. It typically grows up to {size}. "
+        f"This plant thrives in {climate}, preferring {soil} and {sunlight}. "
+        f"Medically, it is known for its {medicinal_properties} properties. "
+        f"In Ayurveda, it is commonly used {ayurveda_uses.lower().strip()}. "
+        f"Culturally, {name.lower()} has been significant for {cultural_significance.lower().strip()}."
+    )
+
+    description = description.replace("..", ".").replace(". .", ". ").replace(" ,", ",").replace("  ", " ").strip()
+
+    return description
+
 # New Endpoint: /plantid/<str:plant_id>
 def plant_details(request, plant_id):
-    # Fetch specific plant details from Firebase Realtime Database
+
     ref = db.reference(f'plants/{plant_id}')
     plant_details = ref.get()
 
     if not plant_details:
         return HttpResponseNotFound(f'Plant ID {plant_id} not found.')
+
+    plant_desc = create_simplified_description(plant_details)
+
+    plant_details['simplified_description'] = plant_desc
 
     return JsonResponse(plant_details)
 
@@ -103,3 +134,26 @@ def search_plant_by_name(request, plant_name):
             return JsonResponse(plant_data)
 
     return HttpResponseNotFound(f'No plant found with the name "{plant_name}".')
+
+# New Endpoint: /plant/therapeutic/<str:therapeutic>
+def search_plant_by_therapeutic_property(request, therapeutic):
+    ref = db.reference('plants')
+    plants = ref.get()
+
+    search_query = therapeutic.lower()
+
+    matching_plants = []
+
+    for plant_id, plant_data in plants.items():
+        therapeutic_properties = [prop.lower() for prop in plant_data.get('medicinal_uses', {}).get('therapeutic_properties', [])]
+        ayush_applications = plant_data.get('medicinal_uses', {}).get('applications_in_ayush', {})
+        combined_text = ' '.join(therapeutic_properties + list(ayush_applications.values())).lower()
+
+        if search_query in combined_text:
+            matching_plants.append(plant_data)
+
+    if not matching_plants:
+        return HttpResponseNotFound(f'No plants found containing the term "{therapeutic}".')
+
+    return JsonResponse(matching_plants, safe=False)
+
