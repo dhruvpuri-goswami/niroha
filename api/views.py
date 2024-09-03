@@ -4,6 +4,7 @@ from firebase_admin import db, storage
 import os
 from datetime import timedelta
 from urllib.parse import unquote
+import re
 
 def hello_world(request):
     return JsonResponse({'message': 'Hello'})
@@ -63,8 +64,14 @@ def upload_files(request):
 def upload_success(request):
     return render(request, 'success.html')
 
+def find_first_number_with_text(size_str):
+    # Find the first number and its following text
+    match = re.search(r"(\d+\.?\d*)\s*([a-zA-Z]+)", size_str)
+    unit = match.groups() if match else "NOT_AVAILABLE"
+    return ' '.join(unit)
+
 # New Endpoint: /limit/<int:limit>
-def limit(request,limit):
+def limit(request, limit):
     if limit <= 0:
         return HttpResponseBadRequest('Limit must be a positive integer.')
 
@@ -74,6 +81,12 @@ def limit(request,limit):
 
     # Limit the number of plants returned
     limited_plants = dict(list(plants.items())[:limit])
+
+    # Add the first number and its text to each plant's data
+    for plant_id, plant_data in limited_plants.items():
+        size_str = plant_data.get('description', {}).get('size', "")
+        first_number_with_text = find_first_number_with_text(size_str)
+        plant_data['size_unit'] = first_number_with_text
 
     return JsonResponse(limited_plants)
 
