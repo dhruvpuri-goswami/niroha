@@ -77,7 +77,7 @@ def limit(request,limit):
 
     return JsonResponse(limited_plants)
 
-# New Endpoint: /<str:plant_id>
+# New Endpoint: /plantid/<str:plant_id>
 def plant_details(request, plant_id):
     # Fetch specific plant details from Firebase Realtime Database
     ref = db.reference(f'plants/{plant_id}')
@@ -87,3 +87,19 @@ def plant_details(request, plant_id):
         return HttpResponseNotFound(f'Plant ID {plant_id} not found.')
 
     return JsonResponse(plant_details)
+
+# New Endpoint: /plant/<str:name>
+def search_plant_by_name(request, plant_name):
+    ref = db.reference('plants')
+    plants = ref.get()
+
+    search_query = plant_name.lower()
+
+    for plant_id, plant_data in plants.items():
+        scientific_name = plant_data.get('scientific_name', '').lower()
+        common_names = [name.lower() for name in plant_data.get('common_names', [])]
+
+        if search_query in scientific_name or search_query in common_names:
+            return JsonResponse(plant_data)
+
+    return HttpResponseNotFound(f'No plant found with the name "{plant_name}".')
